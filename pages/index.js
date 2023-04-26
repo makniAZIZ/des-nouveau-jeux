@@ -1,11 +1,64 @@
-import Head from 'next/head'
-import Image from 'next/image'
-import { Inter } from 'next/font/google'
-import styles from '@/styles/Home.module.css'
+import Head from "next/head";
+import Image from "next/image";
+import { Inter } from "next/font/google";
+import styles from "@/styles/Home.module.css";
+import { useEffect, useState, useId } from "react";
+import Select from "react-select";
+import _ from "lodash";
+import { useRouter } from "next/router";
 
-const inter = Inter({ subsets: ['latin'] })
+export default function selectOption() {
+  const router = useRouter();
+  const [searchValue, setSearchValue] = useState("");
+  const [options, setOptions] = useState([]);
+  // Créer un useState tableau qui va stocker les 10 jeux aléatoires
+  const [jeux, setJeux] = useState([]);
 
-export default function Home() {
+  // const selectOption = () => {};
+
+  const handleInputChange = _.debounce(function (e) {
+    setSearchValue(e);
+  }, 300);
+
+  const selectOption = (game) => {
+    router.push(`/game/${game.value}`);
+  };
+
+  const fetchGames = (searchValue) => {
+    fetch(`/api/igdb/games?query=${searchValue}`)
+      .then((response) => response.json())
+      .then((data) => {
+        // Faites quelque chose avec la variable data ici
+        const nouveauTableau = data.map(
+          (game) =>
+            (game = {
+              label: game.name,
+              value: game.slug,
+            })
+        );
+        setOptions(nouveauTableau);
+        console.log(options);
+      });
+  };
+
+  useEffect(() => {
+    if (searchValue.length) {
+      fetchGames(searchValue);
+    }
+  }, [searchValue]);
+
+  useEffect(() => {
+    loadRandomGames(10);
+  }, []);
+
+  const loadRandomGames = async (nb) => {
+    const response = await fetch(`/api/igdb/randomgames?nb=${nb}`);
+    const data = await response.json();
+    console.log(data);
+    // Envoyer les data dans un useState
+    setJeux(data);
+  };
+
   return (
     <>
       <Head>
@@ -14,110 +67,32 @@ export default function Home() {
         <meta name="viewport" content="width=device-width, initial-scale=1" />
         <link rel="icon" href="/favicon.ico" />
       </Head>
-      <main className={styles.main}>
-        <div className={styles.description}>
-          <p>
-            Get started by editing&nbsp;
-            <code className={styles.code}>pages/index.js</code>
-          </p>
-          <div>
-            <a
-              href="https://vercel.com?utm_source=create-next-app&utm_medium=default-template&utm_campaign=create-next-app"
-              target="_blank"
-              rel="noopener noreferrer"
-            >
-              By{' '}
-              <Image
-                src="/vercel.svg"
-                alt="Vercel Logo"
-                className={styles.vercelLogo}
-                width={100}
-                height={24}
-                priority
-              />
-            </a>
-          </div>
-        </div>
+      <main
+        // className={styles.main}
+        style={{
+          background:
+            "url(https://sms.hypotheses.org/files/2018/12/36307963371_0d7899fa08_z.jpg)",
+          height: "100vh",
+          backgroundSize: "cover",
+          paddingTop: "100px",
+        }}
+      >
+        <div style={{ maxWidth: "1200px", margin: "auto" }}>
+          <h1 className={styles.heading}>
+            et si vous decouvrez des nouveau jeux
+          </h1>
 
-        <div className={styles.center}>
-          <Image
-            className={styles.logo}
-            src="/next.svg"
-            alt="Next.js Logo"
-            width={180}
-            height={37}
-            priority
+          <Select
+            placeholder="League of Legends"
+            instanceId={useId()}
+            value={searchValue}
+            options={options}
+            onChange={selectOption}
+            onInputChange={handleInputChange}
           />
-          <div className={styles.thirteen}>
-            <Image
-              src="/thirteen.svg"
-              alt="13"
-              width={40}
-              height={31}
-              priority
-            />
-          </div>
-        </div>
-
-        <div className={styles.grid}>
-          <a
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=default-template&utm_campaign=create-next-app"
-            className={styles.card}
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <h2 className={inter.className}>
-              Docs <span>-&gt;</span>
-            </h2>
-            <p className={inter.className}>
-              Find in-depth information about Next.js features and&nbsp;API.
-            </p>
-          </a>
-
-          <a
-            href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=default-template&utm_campaign=create-next-app"
-            className={styles.card}
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <h2 className={inter.className}>
-              Learn <span>-&gt;</span>
-            </h2>
-            <p className={inter.className}>
-              Learn about Next.js in an interactive course with&nbsp;quizzes!
-            </p>
-          </a>
-
-          <a
-            href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=default-template&utm_campaign=create-next-app"
-            className={styles.card}
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <h2 className={inter.className}>
-              Templates <span>-&gt;</span>
-            </h2>
-            <p className={inter.className}>
-              Discover and deploy boilerplate example Next.js&nbsp;projects.
-            </p>
-          </a>
-
-          <a
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=default-template&utm_campaign=create-next-app"
-            className={styles.card}
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <h2 className={inter.className}>
-              Deploy <span>-&gt;</span>
-            </h2>
-            <p className={inter.className}>
-              Instantly deploy your Next.js site to a shareable URL
-              with&nbsp;Vercel.
-            </p>
-          </a>
+          {/* Boucler dans le useState qui contient les 10 jeux */}
         </div>
       </main>
     </>
-  )
+  );
 }
